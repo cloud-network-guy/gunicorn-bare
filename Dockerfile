@@ -1,4 +1,5 @@
-FROM python:3.13-alpine
+ARG RUNTIME="python:3.14"
+FROM ${RUNTIME}-alpine
 WORKDIR /tmp
 COPY ./pyproject.toml ./
 RUN pip install --upgrade pip && pip install . --break-system-packages

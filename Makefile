@@ -1,0 +1,42 @@
+SERVICE := gunicorn-bare
+HOST := us-docker.pkg.dev
+REPO := cloudbuild
+RUNTIME := python314
+REGION := us-central1
+PORT := 8080
+PLATFORM := linux/amd64
+DOCKER_PORT := 48080
+
+include Makefile.env
+
+IMAGE = $(HOST)/$(PROJECT_ID)/$(REPO)/$(SERVICE):latest
+
+all: docker gcp
+docker: docker-build docker-run
+gcp: gcp-setup cloud-function cloud-run
+
+docker-build:
+	docker build --tag $(SERVICE) --platform $(PLATFORM) .
+
+docker-run:
+	docker run -p $(DOCKER_PORT)\:$(PORT) $(SERVICE)
+
+docker-push:
+	docker push $(SERVICE)
+
+gcp-setup:
+	gcloud config set project $(PROJECT_ID)
+	gcloud config set core/project $(PROJECT_ID)
+	gcloud config set compute/region $(REGION)
+
+cloud-function:
+	gcloud config set functions/region $(REGION)
+	gcloud functions deploy $(SERVICE) --runtime=$(RUNTIME) --region=$(REGION) \
+	--gen2 --source=. --entry-point=ping --trigger-http --memory=512MB --allow-unauthenticated
+
+cloud-build:
+	gcloud builds submit --tag $(IMAGE) .
+
+cloud-run:
+	gcloud config set run/region $(REGION)
+	gcloud run deploy $(SERVICE) --image $(IMAGE) --port $(PORT) --platform=managed --allow-unauthenticated

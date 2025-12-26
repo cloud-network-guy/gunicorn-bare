@@ -22,7 +22,9 @@ def application(environ, start_response):
         }
 
     # Start the WSGI response with code and headers
-    start_response(http_response.get('statusCode', "000 Unknown") + " ", http_response.get('headers', []))
+    response_status = http_response.get('statusCode', "000 Unknown")
+    response_headers = http_response.get('headers', [])
+    start_response(response_status + " ", response_headers)
 
     if body := http_response.get('body'):
         # If response body is string, we must encode it to bytestring

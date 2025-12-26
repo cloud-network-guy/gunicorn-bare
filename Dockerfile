@@ -1,5 +1,6 @@
-ARG RUNTIME="python:3.14"
-FROM ${RUNTIME}-alpine
+ARG IMAGE=python
+ARG IMAGE_TAG="3.14-alpine"
+FROM ${IMAGE}:${IMAGE_TAG}
 WORKDIR /tmp
 COPY ./pyproject.toml ./
 RUN pip install --upgrade pip && pip install . --break-system-packages

@@ -1,19 +1,22 @@
-SERVICE := gunicorn-bare
-HOST := us-docker.pkg.dev
-REPO := cloudbuild
-RUNTIME := python314
-REGION := us-central1
-PORT := 8080
-PLATFORM := linux/amd64
+SERVICE = gunicorn-bare
+PORT = 8080
 DOCKER_PORT := 48080
+RUNTIME := python314
+PLATFORM := linux/amd64
+GCP_REGION := us-central1
+GCP_HOST := us-docker.pkg.dev
+GCP_REPO := cloudbuild
+GCP_PROJECT_ID := your-project-id
+GCP_EMAIL := my-account@your-project-id.iam.gserviceaccount.com
+GCP_KEYFILE := /home/mykeyfile.json
 
 include Makefile.env
 
-IMAGE = $(HOST)/$(PROJECT_ID)/$(REPO)/$(SERVICE):latest
+GCP_IMAGE = $(GCP_HOST)/$(GCP_PROJECT_ID)/$(GCP_REPO)/$(SERVICE):latest
 
-all: docker gcp
+all: docker
 docker: docker-build docker-run
-gcp: gcp-setup cloud-function cloud-run
+gcp: gcp-config gcp-auth gcp-build
 
 docker-build:
 	docker build --tag $(SERVICE) --platform $(PLATFORM) .
@@ -24,19 +27,17 @@ docker-run:
 docker-push:
 	docker push $(SERVICE)
 
-gcp-setup:
-	gcloud config set project $(PROJECT_ID)
-	gcloud config set core/project $(PROJECT_ID)
-	gcloud config set compute/region $(REGION)
+gcp-config:
+	gcloud config set project $(GCP_PROJECT_ID)
+	gcloud config set core/project $(GCP_PROJECT_ID)
+	gcloud config set compute/region $(GCP_REGION)
 
-cloud-function:
-	gcloud config set functions/region $(REGION)
-	gcloud functions deploy $(SERVICE) --runtime=$(RUNTIME) --region=$(REGION) \
-	--gen2 --source=. --entry-point=ping --trigger-http --memory=512MB --allow-unauthenticated
+gcp-auth:
+	gcloud auth activate-service-account $(GCP_EMAIL) --key-file="$(GCP_KEYFILE)"
 
-cloud-build:
-	gcloud builds submit --tag $(IMAGE) .
+gcp-build:
+	gcloud builds submit --tag $(GCP_IMAGE) .
 
-cloud-run:
+gcp-cloudrun:
 	gcloud config set run/region $(REGION)
 	gcloud run deploy $(SERVICE) --image $(IMAGE) --port $(PORT) --platform=managed --allow-unauthenticated

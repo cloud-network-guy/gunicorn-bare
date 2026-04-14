@@ -35,9 +35,16 @@ gcp-config:
 gcp-auth:
 	gcloud auth activate-service-account $(GCP_EMAIL) --key-file="$(GCP_KEYFILE)"
 
+gcp-appengine:
+	gcloud app deploy ./app.yaml
+
 gcp-build:
 	gcloud builds submit --tag $(GCP_IMAGE) .
 
 gcp-cloudrun:
-	gcloud config set run/region $(REGION)
-	gcloud run deploy $(SERVICE) --image $(IMAGE) --port $(PORT) --platform=managed --allow-unauthenticated
+	gcloud config set run/region $(GCP_REGION)
+	gcloud run deploy $(SERVICE) --image $(GCP_IMAGE) --port $(PORT) --platform=managed --allow-unauthenticated
+
+gcp-cloudfunction:
+	gcloud functions deploy $(SERVICE) --runtime=$(RUNTIME) --region=$(GCP_REGION) \
+	--gen2 --source=. --entry-point=ping --trigger-http --memory=512MB --allow-unauthenticated

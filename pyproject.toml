@@ -5,7 +5,7 @@ requires-python = ">=3.11"
 dependencies = [
     "gunicorn>=23.0.0",
     "paste>=3.10.0",
-    "python-multipart>=0.0.20",
+    "python-multipart>=0.0.32",
 ]
 
 [tool.setuptools]
